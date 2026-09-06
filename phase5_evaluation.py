@@ -75,7 +75,7 @@ def visualize_attention(model, text: str, tokenizer, device, save_name: str = "a
     tokens = tokenizer.convert_ids_to_tokens(input_ids[0][1:].cpu())
 
     plt.figure(figsize=(12, 4))
-    sns.barplot(x=tokens, y=attn_weights, palette="viridis")
+    sns.barplot(x=tokens, y=attn_weights, hue=tokens, legend=False, palette="viridis")
     plt.title(f"Word Attention Weights for Input: '{processed_text}'", fontsize=12, fontweight='bold')
     plt.xlabel("Tokens", fontsize=10, fontweight='bold')
     plt.ylabel("Attention Weight", fontsize=10, fontweight='bold')
