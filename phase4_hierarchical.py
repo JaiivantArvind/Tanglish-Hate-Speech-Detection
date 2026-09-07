@@ -35,7 +35,7 @@ from phase2_preprocessing import TanglishDataset
 
 # Setup Device and Constants
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-N_EPOCHS = 5
+N_EPOCHS = 7
 LR = 2e-5
 BATCH_SIZE = 16
 MAX_LEN = 128
@@ -46,7 +46,8 @@ MAX_LEN = 128
 class HierarchicalMuRIL(nn.Module):
     """
     Hierarchical Hate Speech Detection Model for Code-Mixed Tanglish.
-    Fuses sentence-level [CLS] vector (768) + learned word-attention vector (768).
+    Fuses sentence-level [CLS] vector (768) + learned word-attention vector (768)
+    using a learned gating mechanism.
     """
     def __init__(self, model_name: str = "google/muril-base-cased", num_classes: int = 5, dropout_rate: float = 0.3):
         super(HierarchicalMuRIL, self).__init__()
@@ -54,10 +55,14 @@ class HierarchicalMuRIL(nn.Module):
         self.encoder = AutoModel.from_pretrained(model_name)
         self.word_attn = nn.Linear(768, 1)
 
+        # Learned gating layer
+        self.gate_layer = nn.Linear(768 * 2, 768)
+
+        # Fusion layer with 0.4 dropout
         self.fusion = nn.Sequential(
-            nn.Linear(768 * 2, 768),
+            nn.Linear(768, 768),
             nn.ReLU(),
-            nn.Dropout(dropout_rate)
+            nn.Dropout(0.4)
         )
 
         self.classifier = nn.Linear(768, num_classes)
@@ -82,10 +87,12 @@ class HierarchicalMuRIL(nn.Module):
         # 4. Weighted Word Signal
         word_vec = torch.sum(token_vecs * attn_weights, dim=1)
 
-        # 5. Concatenation & Fusion
-        fused_vec = torch.cat([cls_vec, word_vec], dim=-1)
-        fused_vec = self.dropout(fused_vec)
+        # 5. Learned Gating Mechanism
+        concat_vec = torch.cat([cls_vec, word_vec], dim=-1)
+        gate = torch.sigmoid(self.gate_layer(concat_vec))
+        fused_vec = gate * cls_vec + (1 - gate) * word_vec
 
+        # 6. Fusion & Classifier
         fusion_out = self.fusion(fused_vec)
         logits = self.classifier(fusion_out)
 
@@ -132,8 +139,8 @@ class WordOnlyMuRIL(nn.Module):
 # ==============================================================================
 # Training & Evaluation Orchestrator
 # ==============================================================================
-def train_hierarchical(model, train_loader, dev_loader, class_weights, n_epochs=5, lr=2e-5):
-    """Trains custom PyTorch models returning raw logits."""
+def train_hierarchical(model, train_loader, dev_loader, class_weights, n_epochs=7, lr=2e-5, patience=2):
+    """Trains custom PyTorch models with early stopping."""
     criterion = nn.CrossEntropyLoss(weight=class_weights.to(DEVICE))
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
 
@@ -147,6 +154,7 @@ def train_hierarchical(model, train_loader, dev_loader, class_weights, n_epochs=
 
     best_dev_f1 = 0.0
     best_weights = None
+    patience_counter = 0
 
     for epoch in range(1, n_epochs + 1):
         model.train()
@@ -177,7 +185,14 @@ def train_hierarchical(model, train_loader, dev_loader, class_weights, n_epochs=
         if dev_f1 > best_dev_f1:
             best_dev_f1 = dev_f1
             best_weights = copy.deepcopy(model.state_dict())
+            patience_counter = 0
             print(f"  🏆 New Best Dev Macro F1: {best_dev_f1:.4f}")
+        else:
+            patience_counter += 1
+            print(f"  ⏳ Dev F1 did not improve. Early stopping patience: {patience_counter}/{patience}")
+            if patience_counter >= patience:
+                print(f"🛑 Early stopping triggered after epoch {epoch}!")
+                break
 
     if best_weights is not None:
         model.load_state_dict(best_weights)
