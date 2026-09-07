@@ -39,9 +39,10 @@ from phase2_preprocessing import TanglishDataset
 
 # Setup Device and Constants
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+NUM_GPUS = torch.cuda.device_count()
 N_EPOCHS = 5
 LR = 2e-5
-BATCH_SIZE = 16
+BATCH_SIZE = 32 if NUM_GPUS > 1 else 16
 MAX_LEN = 128
 
 # ==============================================================================
@@ -107,7 +108,11 @@ def run_training(model_name, train_loader, dev_loader, class_weights, label2id):
     model = AutoModelForSequenceClassification.from_pretrained(
         model_name,
         num_labels=len(label2id)
-    ).to(DEVICE)
+    )
+    if NUM_GPUS > 1:
+        print(f"✅ Multi-GPU Enabled: Parallelizing across {NUM_GPUS} GPUs using nn.DataParallel!")
+        model = nn.DataParallel(model)
+    model = model.to(DEVICE)
 
     criterion = nn.CrossEntropyLoss(weight=class_weights.to(DEVICE))
     optimizer = AdamW(model.parameters(), lr=LR, weight_decay=0.01)
@@ -131,11 +136,13 @@ def run_training(model_name, train_loader, dev_loader, class_weights, label2id):
 
         if dev_f1 > best_dev_f1:
             best_dev_f1 = dev_f1
-            best_model_weights = copy.deepcopy(model.state_dict())
+            raw_model = model.module if isinstance(model, nn.DataParallel) else model
+            best_model_weights = copy.deepcopy(raw_model.state_dict())
             print(f"  🏆 New best Dev Macro F1: {best_dev_f1:.4f}")
 
     if best_model_weights is not None:
-        model.load_state_dict(best_model_weights)
+        raw_model = model.module if isinstance(model, nn.DataParallel) else model
+        raw_model.load_state_dict(best_model_weights)
 
     return model, best_dev_f1
 
@@ -179,7 +186,8 @@ def main():
     print(f"\n📊 --- Baseline A (XLM-RoBERTa) Test Results ---")
     print(f"Test Macro F1: {test_f1_xlmr:.4f}\n")
     print(classification_report(xlmr_labels, xlmr_preds, target_names=target_names, digits=4, zero_division=0))
-    torch.save(xlmr_model.state_dict(), "xlmr_baseline.pt")
+    raw_xlmr = xlmr_model.module if isinstance(xlmr_model, nn.DataParallel) else xlmr_model
+    torch.save(raw_xlmr.state_dict(), "xlmr_baseline.pt")
 
     # --------------------------------------------------------------------------
     # Baseline B: MuRIL Sentence-Only
@@ -201,7 +209,8 @@ def main():
     print(f"\n📊 --- Baseline B (MuRIL Sentence-Only) Test Results ---")
     print(f"Test Macro F1: {test_f1_muril:.4f}\n")
     print(classification_report(muril_labels, muril_preds, target_names=target_names, digits=4, zero_division=0))
-    torch.save(muril_model.state_dict(), "muril_baseline.pt")
+    raw_muril = muril_model.module if isinstance(muril_model, nn.DataParallel) else muril_model
+    torch.save(raw_muril.state_dict(), "muril_baseline.pt")
 
     # --------------------------------------------------------------------------
     # Comparison & Saving Output

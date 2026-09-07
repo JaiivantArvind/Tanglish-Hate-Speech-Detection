@@ -35,9 +35,10 @@ from phase2_preprocessing import TanglishDataset
 
 # Setup Device and Constants
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+NUM_GPUS = torch.cuda.device_count()
 N_EPOCHS = 7
 LR = 2e-5
-BATCH_SIZE = 16
+BATCH_SIZE = 32 if NUM_GPUS > 1 else 16
 MAX_LEN = 128
 
 # ==============================================================================
@@ -184,7 +185,8 @@ def train_hierarchical(model, train_loader, dev_loader, class_weights, n_epochs=
 
         if dev_f1 > best_dev_f1:
             best_dev_f1 = dev_f1
-            best_weights = copy.deepcopy(model.state_dict())
+            raw_model = model.module if isinstance(model, nn.DataParallel) else model
+            best_weights = copy.deepcopy(raw_model.state_dict())
             patience_counter = 0
             print(f"  🏆 New Best Dev Macro F1: {best_dev_f1:.4f}")
         else:
@@ -195,7 +197,8 @@ def train_hierarchical(model, train_loader, dev_loader, class_weights, n_epochs=
                 break
 
     if best_weights is not None:
-        model.load_state_dict(best_weights)
+        raw_model = model.module if isinstance(model, nn.DataParallel) else model
+        raw_model.load_state_dict(best_weights)
 
     return model, best_dev_f1
 
@@ -271,27 +274,38 @@ def main():
     # 1. Train Proposed Hierarchical Model
     # --------------------------------------------------------------------------
     print("\n🚀 Training Full Hierarchical Fusion Model (Sentence + Word Attention)...")
-    hier_model = HierarchicalMuRIL().to(DEVICE)
+    hier_model = HierarchicalMuRIL()
+    if NUM_GPUS > 1:
+        print(f"✅ Multi-GPU Enabled: Parallelizing across {NUM_GPUS} GPUs using nn.DataParallel!")
+        hier_model = nn.DataParallel(hier_model)
+    hier_model = hier_model.to(DEVICE)
+
     hier_model, best_dev_f1_hier = train_hierarchical(hier_model, train_loader, dev_loader, class_weights, n_epochs=N_EPOCHS, lr=LR)
     test_f1_hier, hier_preds, hier_labels, _ = test_hierarchical(hier_model, test_loader, criterion)
 
     print(f"\n📊 --- Proposed Hierarchical Model Test Results ---")
     print(f"Test Macro F1: {test_f1_hier:.4f}\n")
     print(classification_report(hier_labels, hier_preds, target_names=target_names, digits=4, zero_division=0))
-    torch.save(hier_model.state_dict(), "hier_model.pt")
+    raw_hier = hier_model.module if isinstance(hier_model, nn.DataParallel) else hier_model
+    torch.save(raw_hier.state_dict(), "hier_model.pt")
 
     # --------------------------------------------------------------------------
     # 2. Train Word-Only Ablation Model
     # --------------------------------------------------------------------------
     print("\n🔬 Training Ablation Model (Word Attention Only)...")
-    word_model = WordOnlyMuRIL().to(DEVICE)
+    word_model = WordOnlyMuRIL()
+    if NUM_GPUS > 1:
+        word_model = nn.DataParallel(word_model)
+    word_model = word_model.to(DEVICE)
+
     word_model, best_dev_f1_word = train_hierarchical(word_model, train_loader, dev_loader, class_weights, n_epochs=N_EPOCHS, lr=LR)
     test_f1_word, word_preds, word_labels, _ = test_hierarchical(word_model, test_loader, criterion)
 
     print(f"\n📊 --- Word-Only Ablation Model Test Results ---")
     print(f"Test Macro F1: {test_f1_word:.4f}\n")
     print(classification_report(word_labels, word_preds, target_names=target_names, digits=4, zero_division=0))
-    torch.save(word_model.state_dict(), "word_model.pt")
+    raw_word = word_model.module if isinstance(word_model, nn.DataParallel) else word_model
+    torch.save(raw_word.state_dict(), "word_model.pt")
 
     # --------------------------------------------------------------------------
     # 3. Final 4-Model Results Comparison Table

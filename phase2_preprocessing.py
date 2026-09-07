@@ -156,8 +156,11 @@ def main():
     print(f"\nLoading MuRIL tokenizer '{MODEL_NAME}'...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-    BATCH_SIZE = 16
+    NUM_GPUS = torch.cuda.device_count()
+    BATCH_SIZE = 32 if NUM_GPUS > 1 else 16
     MAX_LEN = 128
+    if NUM_GPUS > 1:
+        print(f"✅ Multi-GPU Detected: {NUM_GPUS} GPUs available. Scaling BATCH_SIZE to {BATCH_SIZE}.")
 
     train_dataset = TanglishDataset(train_df, tokenizer, max_len=MAX_LEN)
     dev_dataset   = TanglishDataset(dev_df, tokenizer, max_len=MAX_LEN)

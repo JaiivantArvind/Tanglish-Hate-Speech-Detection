@@ -38,8 +38,9 @@ from phase4_hierarchical import HierarchicalMuRIL, test_hierarchical
 
 # Setup Device
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+NUM_GPUS = torch.cuda.device_count()
 MAX_LEN = 128
-BATCH_SIZE = 16
+BATCH_SIZE = 32 if NUM_GPUS > 1 else 16
 
 # ==============================================================================
 # Step 3: Word Attention Visualization Function
@@ -48,7 +49,8 @@ def visualize_attention(model, text: str, tokenizer, device, save_name: str = "a
     """
     Visualizes token-level attention weights learned by the word_attn layer of HierarchicalMuRIL.
     """
-    model.eval()
+    raw_model = model.module if isinstance(model, nn.DataParallel) else model
+    raw_model.eval()
 
     processed_text = normalize_tanglish(text)
     encoding = tokenizer(
@@ -62,13 +64,13 @@ def visualize_attention(model, text: str, tokenizer, device, save_name: str = "a
     attention_mask = encoding['attention_mask'].to(device)
 
     with torch.no_grad():
-        encoder_outputs = model.encoder(input_ids=input_ids, attention_mask=attention_mask)
+        encoder_outputs = raw_model.encoder(input_ids=input_ids, attention_mask=attention_mask)
         last_hidden_state = encoder_outputs.last_hidden_state
 
         token_vecs = last_hidden_state[:, 1:, :]
         token_mask = attention_mask[:, 1:]
 
-        attn_scores = model.word_attn(token_vecs).squeeze(-1)
+        attn_scores = raw_model.word_attn(token_vecs).squeeze(-1)
         attn_scores = attn_scores.masked_fill(token_mask == 0, -1e9)
         attn_weights = torch.softmax(attn_scores, dim=-1).squeeze(0).cpu().numpy()
 
@@ -84,7 +86,6 @@ def visualize_attention(model, text: str, tokenizer, device, save_name: str = "a
 
     plt.savefig(save_name, dpi=300)
     print(f"✅ Saved attention visualization plot to '{save_name}'")
-    plt.show()
     plt.close()
 
 
@@ -119,8 +120,12 @@ def main():
     test_dataset = TanglishDataset(test_df, tokenizer, max_len=MAX_LEN)
     test_loader  = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    hier_model = HierarchicalMuRIL().to(DEVICE)
+    hier_model = HierarchicalMuRIL()
     hier_model.load_state_dict(torch.load(model_weight_file, map_location=DEVICE))
+    if NUM_GPUS > 1:
+        print(f"✅ Multi-GPU Enabled: Parallelizing evaluation across {NUM_GPUS} GPUs!")
+        hier_model = nn.DataParallel(hier_model)
+    hier_model = hier_model.to(DEVICE)
     print("✅ Successfully loaded trained HierarchicalMuRIL model weights.")
 
     # --------------------------------------------------------------------------
