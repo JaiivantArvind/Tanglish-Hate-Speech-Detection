@@ -1,0 +1,3 @@
+inherit: base.yaml
+name: s1_xlmr_base
+model_name: FacebookAI/xlm-roberta-base

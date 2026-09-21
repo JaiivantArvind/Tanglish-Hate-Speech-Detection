@@ -1,0 +1,21 @@
+# Shared settings. Every experiment inherits these so comparisons differ only in
+# the setting under test (same epochs, early stopping, loss and optimiser).
+data_dir: data
+out_dir: runs
+max_len: 128
+head: cls
+label_tree: false
+dropout: 0.1
+lexicon: "off"
+translit: "off"
+loss: ce
+class_weight: sqrt
+epochs: 5
+batch_size: 16        # per GPU; 2x T4 -> effective 32
+grad_accum: 1
+lr: 2.0e-5
+head_lr_mult: 5.0
+llrd: 0.9
+warmup_ratio: 0.1
+patience: 2
+fp16: true

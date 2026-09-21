@@ -1,0 +1,4 @@
+# Stage 3 backbone. Defaults to DAPT-MuRIL; if stage 2 shows no dev gain over
+# stage 1, point this at the best stage-1 backbone instead.
+inherit: base.yaml
+model_name: dapt/muril-base-tanglish/final

@@ -1,0 +1,3 @@
+inherit: base.yaml
+name: s1_indicbert2
+model_name: ai4bharat/IndicBERTv2-MLM-Sam-TLM

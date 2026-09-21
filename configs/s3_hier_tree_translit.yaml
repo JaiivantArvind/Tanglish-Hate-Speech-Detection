@@ -1,0 +1,5 @@
+inherit: s3_base.yaml
+name: s3_hier_tree_translit
+head: hier
+label_tree: true
+translit: aug_tta
