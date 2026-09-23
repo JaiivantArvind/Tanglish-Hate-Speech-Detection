@@ -195,6 +195,15 @@ def run(cfg: ExpConfig) -> dict | None:
         log(f"lexicon '{cfg.lexicon}': {len(pipe.lexicon.terms)} terms, train coverage "
             f"{pipe.lexicon.coverage(splits['train']['text']):.1%}")
 
+    # A Hub id looks like "namespace/name"; anything deeper is a local directory
+    # (e.g. a DAPT output), which must exist before training can start.
+    if cfg.model_name.count("/") > 1 and not Path(cfg.model_name).is_dir():
+        raise FileNotFoundError(
+            f"model_name '{cfg.model_name}' is a local path but does not exist. "
+            "On Kaggle: attach the previous version (Add Input -> Your Work) and run the "
+            "restore cell so dapt/ is copied back, or point the config at a Hub model, "
+            "e.g. --set model_name=FacebookAI/xlm-roberta-base")
+
     tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
     if not tokenizer.is_fast:
         raise RuntimeError("word pooling needs a fast tokenizer (word_ids)")
