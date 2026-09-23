@@ -13,6 +13,7 @@ The result is loaded like any Hugging Face model: set `model_name: <out>/final`.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import math
 import os
 import random
@@ -70,8 +71,12 @@ def main():
     ap.add_argument("--extra-text", nargs="*", default=[])
     ap.add_argument("--epochs", type=float, default=10)
     ap.add_argument("--lr", type=float, default=5e-5)
-    ap.add_argument("--batch-size", type=int, default=32, help="per device")
-    ap.add_argument("--max-len", type=int, default=128)
+    # The MLM head emits batch x length x vocab logits (250k vocab for XLM-R), which
+    # Accelerate then upcasts to fp32. A small per-device batch keeps that tensor off
+    # the 15 GB T4; grad_accum restores the effective batch.
+    ap.add_argument("--batch-size", type=int, default=8, help="per device")
+    ap.add_argument("--grad-accum", type=int, default=4)
+    ap.add_argument("--max-len", type=int, default=96)
     ap.add_argument("--mlm-prob", type=float, default=0.15)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
@@ -92,13 +97,18 @@ def main():
     model = AutoModelForMaskedLM.from_pretrained(args.model)
     # Integer warmup steps work on both transformers 4.x and 5.x (5.x dropped warmup_ratio).
     world = int(os.environ.get("WORLD_SIZE", "1"))
-    total_steps = math.ceil(len(split["train"]) / (args.batch_size * world)) * args.epochs
-    training_args = TrainingArguments(
+    total_steps = math.ceil(len(split["train"]) / (args.batch_size * world * args.grad_accum)) * args.epochs
+    # Option names drift between transformers 4.x and 5.x; keep only what this version takes.
+    wanted = dict(
         output_dir=str(out),
         num_train_epochs=args.epochs,
         learning_rate=args.lr,
         per_device_train_batch_size=args.batch_size,
-        per_device_eval_batch_size=args.batch_size * 2,
+        per_device_eval_batch_size=args.batch_size,
+        gradient_accumulation_steps=args.grad_accum,
+        group_by_length=True,          # batches of similar length: less padding, smaller logits
+        ddp_find_unused_parameters=False,
+        prediction_loss_only=True,     # never accumulate vocab-sized eval logits
         warmup_steps=int(0.06 * total_steps),
         weight_decay=0.01,
         fp16=torch.cuda.is_available(),
@@ -109,6 +119,12 @@ def main():
         report_to=[],
         seed=args.seed,
     )
+    supported = {f.name for f in dataclasses.fields(TrainingArguments)}
+    dropped = sorted(set(wanted) - supported)
+    if dropped:
+        print(f"note: this transformers version ignores {dropped}")
+    training_args = TrainingArguments(**{k: v for k, v in wanted.items() if k in supported})
+
     trainer = Trainer(
         model=model,
         args=training_args,
