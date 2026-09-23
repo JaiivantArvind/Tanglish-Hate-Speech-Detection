@@ -1,0 +1,3 @@
+inherit: base.yaml
+name: s2_mbert_dapt
+model_name: dapt/mbert-tanglish/final

@@ -4,7 +4,9 @@
     python scripts/run_experiments.py --stage 3 --dry-run
 
 Stage 1: backbone sweep (sentence-only head, 1 seed)
-Stage 2: domain-adaptive pretraining of MuRIL and XLM-R, then fine-tune both (1 seed)
+Stage 2: domain-adaptive pretraining, then fine-tune the adapted encoder (1 seed).
+        Select the backbones you care about, e.g.
+        --only dapt_xlmr s2_xlmr_base_dapt
 Stage 3: main ablation on the stage-3 backbone (3 seeds)
 Stage 4: large backbones with the stage-3 winner (2 seeds)
 
@@ -26,16 +28,18 @@ SEEDS_MAIN = [13, 42, 87]
 
 STAGES = {
     1: [("s1_mbert", [42]), ("s1_xlmr_base", [42]), ("s1_muril_base", [42]), ("s1_indicbert2", [42])],
-    2: [("s2_muril_base_dapt", [42]), ("s2_xlmr_base_dapt", [42])],
+    2: [("s2_xlmr_base_dapt", [42]), ("s2_mbert_dapt", [42]), ("s2_muril_base_dapt", [42])],
     3: [(name, SEEDS_MAIN) for name in
         ("s3_cls", "s3_word", "s3_hier", "s3_hier_tree", "s3_hier_tree_lex", "s3_hier_tree_translit")],
-    4: [("s4_muril_large", [13, 42]), ("s4_xlmr_large", [13, 42])],
+    4: [("s4_xlmr_large", [13, 42])],  # s4_muril_large exists but MuRIL-base lost stage 1: use --only to add it
 }
 
-DAPT_JOBS = [
-    ("google/muril-base-cased", "dapt/muril-base-tanglish"),
-    ("FacebookAI/xlm-roberta-base", "dapt/xlmr-base-tanglish"),
-]
+# Domain-adaptive pretraining jobs, selectable with --only.
+DAPT_JOBS = {
+    "dapt_xlmr": ("FacebookAI/xlm-roberta-base", "dapt/xlmr-base-tanglish"),
+    "dapt_mbert": ("google-bert/bert-base-multilingual-cased", "dapt/mbert-tanglish"),
+    "dapt_muril": ("google/muril-base-cased", "dapt/muril-base-tanglish"),
+}
 
 
 def launcher() -> list[str]:
@@ -65,7 +69,9 @@ def main():
     args = ap.parse_args()
 
     if args.stage == 2:
-        for model, out in DAPT_JOBS:
+        for name, (model, out) in DAPT_JOBS.items():
+            if args.only and name not in args.only:
+                continue
             run(launcher() + ["tanglish.dapt", "--model", model, "--out", out], args.dry_run)
 
     for name, seeds in STAGES[args.stage]:
