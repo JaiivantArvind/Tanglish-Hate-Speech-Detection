@@ -64,6 +64,9 @@ Each point is backed by `reports/data_stats.md` and `reports/lexicon_report.md`.
   - Runs resume after a Kaggle session ends, from the last completed epoch.
   - Multi-seed stages run seed-major by default, so an interrupted stage still gives a
     complete ablation across configurations (`--order config-major` for the old order).
+  - A stage stops launching runs once the next would not finish within `--max-hours`
+    (default 10.5). A Kaggle session cancelled at the 12 h limit can lose the whole
+    version's output, so the stage exits cleanly instead and resumes next session.
 
 ## Layout
 
