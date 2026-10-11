@@ -61,7 +61,9 @@ Each point is backed by `reports/data_stats.md` and `reports/lexicon_report.md`.
 - **Engineering.**
   - Mixed precision, dynamic padding (95% of comments are ≤ 22 words) and
     2-GPU DDP instead of `DataParallel`.
-  - Runs resume after a Kaggle session ends.
+  - Runs resume after a Kaggle session ends, from the last completed epoch.
+  - Multi-seed stages run seed-major by default, so an interrupted stage still gives a
+    complete ablation across configurations (`--order config-major` for the old order).
 
 ## Layout
 

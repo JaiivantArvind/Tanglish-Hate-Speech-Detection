@@ -65,6 +65,9 @@ def main():
     ap.add_argument("--stage", type=int, required=True, choices=sorted(STAGES))
     ap.add_argument("--only", nargs="*", help="run only these experiment names")
     ap.add_argument("--set", nargs="*", default=[], help="config overrides passed to every run")
+    ap.add_argument("--order", choices=["seed-major", "config-major"], default="seed-major",
+                    help="seed-major finishes seed 1 of every config before starting seed 2, so an "
+                         "interrupted stage still yields a complete ablation ranking")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -74,14 +77,21 @@ def main():
                 continue
             run(launcher() + ["tanglish.dapt", "--model", model, "--out", out], args.dry_run)
 
-    for name, seeds in STAGES[args.stage]:
-        if args.only and name not in args.only:
-            continue
-        for seed in seeds:
-            cmd = launcher() + ["tanglish.train", "--config", f"configs/{name}.yaml", "--seed", str(seed)]
-            if args.set:
-                cmd += ["--set", *args.set]
-            run(cmd, args.dry_run)
+    jobs = [(name, seeds) for name, seeds in STAGES[args.stage]
+            if not args.only or name in args.only]
+    if args.order == "seed-major":
+        # Round-robin over seed slots: every config's seed-13 run comes first, then
+        # every config's seed-42 run, and so on. Configs may declare different seeds.
+        pairs = [(name, seeds[i]) for i in range(max((len(s) for _, s in jobs), default=0))
+                 for name, seeds in jobs if i < len(seeds)]
+    else:
+        pairs = [(name, seed) for name, seeds in jobs for seed in seeds]
+
+    for name, seed in pairs:
+        cmd = launcher() + ["tanglish.train", "--config", f"configs/{name}.yaml", "--seed", str(seed)]
+        if args.set:
+            cmd += ["--set", *args.set]
+        run(cmd, args.dry_run)
 
 
 if __name__ == "__main__":
