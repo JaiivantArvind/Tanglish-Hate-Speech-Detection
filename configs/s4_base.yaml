@@ -13,9 +13,11 @@
 # the curated lexicon (+0.0064 over hier_tree), so stage 4 takes those two.
 # Transliteration is dropped: worst test macro-F1 (0.4905) at roughly twice the cost.
 #
-# Loss and class weighting stay at the stage-3 defaults (ce + sqrt). Stage 3b would
-# have swept them, but it was skipped in favour of going straight to the large
-# backbone; configs/s3b_*.yaml are kept if that is ever revisited.
+# Loss and class weighting are still at the stage-3 defaults (ce + sqrt).
+# SET THESE FROM STAGE 3B BEFORE RUNNING STAGE 4: if s3b_word_focal, _focal_sqrt or
+# _balanced wins on dev macro F1, copy its loss/class_weight here; if s3b_word_lex
+# wins, the lexicon below is already right. Stage 4 costs ~5 h, so it is worth the
+# two minutes of reading the dev column first.
 inherit: base.yaml
 head: word
 label_tree: false
