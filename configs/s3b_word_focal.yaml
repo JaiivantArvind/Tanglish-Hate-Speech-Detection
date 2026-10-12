@@ -1,0 +1,8 @@
+# Imbalance axis, untested in stage 3: focal loss instead of class weighting.
+# OTH (454 train rows) scored 0.00-0.04 F1 in every stage-3 run and is worth
+# ~0.04 macro-F1 on its own, far more than the whole head ablation.
+inherit: s3_base.yaml
+name: s3b_word_focal
+head: word
+loss: focal
+class_weight: none

@@ -1,0 +1,6 @@
+# Focal loss on top of the stage-3 weighting, rather than replacing it.
+inherit: s3_base.yaml
+name: s3b_word_focal_sqrt
+head: word
+loss: focal
+class_weight: sqrt

@@ -3,12 +3,15 @@
     python scripts/run_experiments.py --stage 1
     python scripts/run_experiments.py --stage 3 --dry-run
 
-Stage 1: backbone sweep (sentence-only head, 1 seed)
-Stage 2: domain-adaptive pretraining, then fine-tune the adapted encoder (1 seed).
-        Select the backbones you care about, e.g.
-        --only dapt_xlmr s2_xlmr_base_dapt
-Stage 3: main ablation on the stage-3 backbone (3 seeds)
-Stage 4: large backbones with the stage-3 winner (2 seeds)
+Stage 1:  backbone sweep (sentence-only head, 1 seed)
+Stage 2:  domain-adaptive pretraining, then fine-tune the adapted encoder (1 seed).
+          Select the backbones you care about, e.g.
+          --only dapt_xlmr s2_xlmr_base_dapt
+Stage 3:  main ablation on the stage-3 backbone (3 seeds)
+Stage 3b: loss and class-weighting sweep on the stage-3 head (3 seeds). Stage 3
+          varied only the head and the input features; every run used ce + sqrt
+          weights and scored 0.00-0.04 F1 on OTH, which caps macro-F1.
+Stage 4:  large backbones with the stage-3 winner (2 seeds)
 
 Finished runs are skipped and interrupted runs resume, so the same command can
 simply be launched again in a fresh Kaggle session.
@@ -41,12 +44,15 @@ DEFAULT_RUN_MINUTES = 45.0
 RUN_MINUTES = {"s3_hier_tree_translit": 85.0, "s4_xlmr_large": 150.0, "s4_muril_large": 150.0}
 DAPT_MINUTES = 120.0
 
+# Keys are strings so a stage can be named "3b" rather than renumbering the matrix.
 STAGES = {
-    1: [("s1_mbert", [42]), ("s1_xlmr_base", [42]), ("s1_muril_base", [42]), ("s1_indicbert2", [42])],
-    2: [("s2_xlmr_base_dapt", [42]), ("s2_mbert_dapt", [42]), ("s2_muril_base_dapt", [42])],
-    3: [(name, SEEDS_MAIN) for name in
-        ("s3_cls", "s3_word", "s3_hier", "s3_hier_tree", "s3_hier_tree_lex", "s3_hier_tree_translit")],
-    4: [("s4_xlmr_large", [13, 42])],  # s4_muril_large exists but MuRIL-base lost stage 1: use --only to add it
+    "1": [("s1_mbert", [42]), ("s1_xlmr_base", [42]), ("s1_muril_base", [42]), ("s1_indicbert2", [42])],
+    "2": [("s2_xlmr_base_dapt", [42]), ("s2_mbert_dapt", [42]), ("s2_muril_base_dapt", [42])],
+    "3": [(name, SEEDS_MAIN) for name in
+          ("s3_cls", "s3_word", "s3_hier", "s3_hier_tree", "s3_hier_tree_lex", "s3_hier_tree_translit")],
+    "3b": [(name, SEEDS_MAIN) for name in
+           ("s3b_word_lex", "s3b_word_focal", "s3b_word_focal_sqrt", "s3b_word_balanced")],
+    "4": [("s4_xlmr_large", [13, 42])],  # s4_muril_large exists but MuRIL-base lost stage 1: use --only to add it
 }
 
 # Domain-adaptive pretraining jobs, selectable with --only.
@@ -102,9 +108,17 @@ def remaining_fraction(name: str, seed: int) -> float:
         return 1.0
 
 
+def report(launched: int, skipped: int, started: float) -> int:
+    print(f"[done] {launched} run(s) launched, {skipped} skipped, "
+          f"{(time.monotonic() - started) / 3600:.1f} h elapsed.", flush=True)
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", type=int, required=True, choices=sorted(STAGES))
+    ap.add_argument("--stage", required=True, nargs="+", choices=list(STAGES),
+                    help="one or more stages, run in the order given and sharing a single "
+                         "--max-hours budget (e.g. --stage 3 3b to top up stage 3 and carry on)")
     ap.add_argument("--only", nargs="*", help="run only these experiment names")
     ap.add_argument("--set", nargs="*", default=[], help="config overrides passed to every run")
     ap.add_argument("--order", choices=["seed-major", "config-major"], default="seed-major",
@@ -134,51 +148,54 @@ def main():
               f"[budget] re-launch this same command in a new session to continue.", flush=True)
         return False
 
-    if args.stage == 2:
-        for name, (model, out) in DAPT_JOBS.items():
-            if args.only and name not in args.only:
-                continue
-            if (ROOT / out / "final").is_dir():
-                print(f"[skip] {out} already built", flush=True)
+    for stage in args.stage:
+        if len(args.stage) > 1:
+            print(f"\n=== stage {stage} ===", flush=True)
+
+        if stage == "2":
+            for name, (model, out) in DAPT_JOBS.items():
+                if args.only and name not in args.only:
+                    continue
+                if (ROOT / out / "final").is_dir():
+                    print(f"[skip] {out} already built", flush=True)
+                    skipped += 1
+                    continue
+                if not fits(name, DAPT_MINUTES):
+                    return report(launched, skipped, started)
+                run(launcher() + ["tanglish.dapt", "--model", model, "--out", out], args.dry_run)
+                launched += 1
+
+        jobs = [(name, seeds) for name, seeds in STAGES[stage]
+                if not args.only or name in args.only]
+        if args.order == "seed-major":
+            # Round-robin over seed slots: every config's seed-13 run comes first, then
+            # every config's seed-42 run, and so on. Configs may declare different seeds.
+            pairs = [(name, seeds[i]) for i in range(max((len(s) for _, s in jobs), default=0))
+                     for name, seeds in jobs if i < len(seeds)]
+        else:
+            pairs = [(name, seed) for name, seeds in jobs for seed in seeds]
+
+        for name, seed in pairs:
+            key = f"{name}/seed{seed}"
+            # Checked here as well as in train.py, so a finished run costs no budget
+            # and no interpreter start-up.
+            if (run_dir(name, seed) / "metrics.json").exists():
+                print(f"[skip] {key} already finished", flush=True)
                 skipped += 1
                 continue
-            if not fits(name, DAPT_MINUTES):
-                return 0
-            run(launcher() + ["tanglish.dapt", "--model", model, "--out", out], args.dry_run)
+            estimate = observed.get(name, RUN_MINUTES.get(name, DEFAULT_RUN_MINUTES)) * remaining_fraction(name, seed)
+            if not fits(key, estimate):
+                # The budget is shared, so a later stage cannot fit either.
+                return report(launched, skipped, started)
+            cmd = launcher() + ["tanglish.train", "--config", f"configs/{name}.yaml", "--seed", str(seed)]
+            if args.set:
+                cmd += ["--set", *args.set]
+            took = run(cmd, args.dry_run)
             launched += 1
+            if not args.dry_run and took > 1:
+                observed[name] = took
 
-    jobs = [(name, seeds) for name, seeds in STAGES[args.stage]
-            if not args.only or name in args.only]
-    if args.order == "seed-major":
-        # Round-robin over seed slots: every config's seed-13 run comes first, then
-        # every config's seed-42 run, and so on. Configs may declare different seeds.
-        pairs = [(name, seeds[i]) for i in range(max((len(s) for _, s in jobs), default=0))
-                 for name, seeds in jobs if i < len(seeds)]
-    else:
-        pairs = [(name, seed) for name, seeds in jobs for seed in seeds]
-
-    for name, seed in pairs:
-        key = f"{name}/seed{seed}"
-        # Checked here as well as in train.py, so a finished run costs no budget
-        # and no interpreter start-up.
-        if (run_dir(name, seed) / "metrics.json").exists():
-            print(f"[skip] {key} already finished", flush=True)
-            skipped += 1
-            continue
-        estimate = observed.get(name, RUN_MINUTES.get(name, DEFAULT_RUN_MINUTES)) * remaining_fraction(name, seed)
-        if not fits(key, estimate):
-            break
-        cmd = launcher() + ["tanglish.train", "--config", f"configs/{name}.yaml", "--seed", str(seed)]
-        if args.set:
-            cmd += ["--set", *args.set]
-        took = run(cmd, args.dry_run)
-        launched += 1
-        if not args.dry_run and took > 1:
-            observed[name] = took
-
-    print(f"[done] {launched} run(s) launched, {skipped} skipped, "
-          f"{(time.monotonic() - started) / 3600:.1f} h elapsed.", flush=True)
-    return 0
+    return report(launched, skipped, started)
 
 
 if __name__ == "__main__":

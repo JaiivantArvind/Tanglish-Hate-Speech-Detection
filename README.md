@@ -17,6 +17,28 @@ DravidianLangTech-EACL 2021 winner) and **0.793 weighted F1** (pseudo-labelling 
 transliteration). We report **macro F1** as the primary metric and weighted F1 for
 comparison with those papers.
 
+## What the experiments found
+
+Measured, not assumed. Selection is always on **dev**; test numbers are reported, never chosen on.
+
+- **The backbone and domain-adaptive pretraining are what pay.** MuRIL lost badly
+  (dev macro F1 0.399, and 0.000 F1 on targeted-individual); XLM-R won at 0.495, and DAPT
+  on in-domain Tanglish added +0.017 test macro F1 on top of it.
+- **The subword → word → sentence hierarchy does not help.** Across 3 seeds it scores
+  0.5038 dev macro F1 against 0.5048 for a plain `[CLS]` baseline. Adding the label tree
+  gives 0.5040. The whole six-config ablation spans 0.0066, inside the ±0.005 seed std, so
+  none of these differences is significant. Points 1 and 2 below are implemented and
+  available, but the evidence does not support them as contributions.
+- **Transliteration does not pay for itself.** Worst test macro F1 of the six (0.4905) at
+  roughly twice the training cost.
+- **The curated lexicon and the word head are the only positive signals**, at +0.0064 and
+  +0.0041 dev macro F1. Both are weak — about one seed std.
+- **The binding constraint is class OTH** (`Offensive_Targeted_Insult_Other`, 450 training
+  rows), which scores 0.00–0.04 F1 in every run. Since macro F1 is a flat mean over six
+  classes, that one class caps the metric by roughly 0.04 — six times the spread of the
+  entire head ablation. Stage 3b therefore sweeps the loss and class weighting, which every
+  stage-3 run held fixed at `ce` + `sqrt`.
+
 ## What the method does
 
 1. **Subword → word → sentence hierarchy.** Subword vectors are mean-pooled into
@@ -100,19 +122,23 @@ python -m tanglish.train --config configs/smoke.yaml    # 1-minute CPU smoke tes
 
 python scripts/run_experiments.py --stage 1     # backbone sweep
 python scripts/run_experiments.py --stage 2     # DAPT + fine-tune
-python scripts/run_experiments.py --stage 3     # ablation, 3 seeds
+python scripts/run_experiments.py --stage 3     # head/feature ablation, 3 seeds
+python scripts/run_experiments.py --stage 3b    # loss + class-weighting sweep, 3 seeds
 python scripts/run_experiments.py --stage 4     # large backbones
 python scripts/phase5_report.py                 # tables, significance, ensemble, figures
 ```
 
-A single run: `accelerate launch -m tanglish.train --config configs/s3_hier_tree.yaml --seed 13`.
+Several stages can share one session budget: `--stage 3 3b` runs them in order and stops
+when the next run would not fit in `--max-hours`.
+
+A single run: `accelerate launch -m tanglish.train --config configs/s3_word.yaml --seed 13`.
 Any config value can be overridden with `--set key=value`.
 
 **Decision points.**
 - After stage 2: keep `configs/s3_base.yaml` on the DAPT model only if it beat plain
   MuRIL on **dev** macro F1.
-- After stage 3: set `configs/s4_base.yaml` to the winning head, lexicon and
-  transliteration settings.
+- After stage 3b: set `configs/s4_base.yaml` to the winning head, lexicon, loss and
+  class weighting.
 - Never choose settings by test scores.
 
 **Romanised → Tamil views** need AI4Bharat IndicXlit (`ai4bharat-transliteration`,
