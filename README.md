@@ -137,8 +137,9 @@ Any config value can be overridden with `--set key=value`.
 **Decision points.**
 - After stage 2: keep `configs/s3_base.yaml` on the DAPT model only if it beat plain
   MuRIL on **dev** macro F1.
-- After stage 3b: set `configs/s4_base.yaml` to the winning head, lexicon, loss and
-  class weighting.
+- After stage 3: set `configs/s4_base.yaml` to the winning head and lexicon. Already done.
+- Stage 3b is optional and currently skipped; it sweeps the loss and class weighting,
+  which stage 3 held fixed at `ce` + `sqrt`.
 - Never choose settings by test scores.
 
 **Romanised → Tamil views** need AI4Bharat IndicXlit (`ai4bharat-transliteration`,

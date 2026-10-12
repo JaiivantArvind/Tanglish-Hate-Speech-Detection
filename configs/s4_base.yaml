@@ -13,8 +13,9 @@
 # the curated lexicon (+0.0064 over hier_tree), so stage 4 takes those two.
 # Transliteration is dropped: worst test macro-F1 (0.4905) at roughly twice the cost.
 #
-# Re-check after stage 3b. If a loss or class-weighting variant wins there, set the
-# same loss/class_weight here before running stage 4.
+# Loss and class weighting stay at the stage-3 defaults (ce + sqrt). Stage 3b would
+# have swept them, but it was skipped in favour of going straight to the large
+# backbone; configs/s3b_*.yaml are kept if that is ever revisited.
 inherit: base.yaml
 head: word
 label_tree: false
