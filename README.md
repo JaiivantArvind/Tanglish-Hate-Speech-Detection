@@ -21,23 +21,37 @@ comparison with those papers.
 
 Measured, not assumed. Selection is always on **dev**; test numbers are reported, never chosen on.
 
+All numbers are dev macro F1 over 3 seeds unless noted. Selection is always on **dev**;
+test numbers are reported, never chosen on. Significance is a paired bootstrap on test
+macro F1 against the `s3_cls` baseline, 10k resamples.
+
 - **The backbone and domain-adaptive pretraining are what pay.** MuRIL lost badly
-  (dev macro F1 0.399, and 0.000 F1 on targeted-individual); XLM-R won at 0.495, and DAPT
-  on in-domain Tanglish added +0.017 test macro F1 on top of it.
-- **The subword → word → sentence hierarchy does not help.** Across 3 seeds it scores
-  0.5038 dev macro F1 against 0.5048 for a plain `[CLS]` baseline. Adding the label tree
-  gives 0.5040. The whole six-config ablation spans 0.0066, inside the ±0.005 seed std, so
-  none of these differences is significant. Points 1 and 2 below are implemented and
-  available, but the evidence does not support them as contributions.
-- **Transliteration does not pay for itself.** Worst test macro F1 of the six (0.4905) at
-  roughly twice the training cost.
-- **The curated lexicon and the word head are the only positive signals**, at +0.0064 and
-  +0.0041 dev macro F1. Both are weak — about one seed std.
-- **The binding constraint is class OTH** (`Offensive_Targeted_Insult_Other`, 450 training
-  rows), which scores 0.00–0.04 F1 in every run. Since macro F1 is a flat mean over six
-  classes, that one class caps the metric by roughly 0.04 — six times the spread of the
-  entire head ablation. Stage 3b therefore sweeps the loss and class weighting, which every
-  stage-3 run held fixed at `ce` + `sqrt`.
+  (0.399, and 0.000 F1 on targeted-individual); XLM-R won at 0.495, and DAPT on in-domain
+  Tanglish added +0.017 test macro F1 on top of it. Everything after this is small.
+- **The curated lexicon is the one ingredient that reliably helps.** It gains +0.0093 on
+  the word head (0.5089 → 0.5182) and +0.0064 on the label-tree head (0.5040 → 0.5104).
+  Two different heads, same direction: the most consistent effect in the table.
+  `s3b_word_lex` is the overall winner at **0.5182 ± 0.0026**.
+- **The subword → word → sentence hierarchy does not help.** 0.5090 ± 0.0073 against
+  0.5048 ± 0.0056 for a plain `[CLS]` baseline — inside the seed noise, and a paired
+  bootstrap on test gives Δ = -0.0008, p = 0.56. Adding the label tree on top makes it
+  slightly worse (0.5040). Points 1 and 2 below are implemented, but the evidence does not
+  support them as contributions.
+- **Transliteration does not pay for itself.** Worst test macro F1 of the stage-3 six
+  (0.4886) at roughly twice the training cost.
+- **Rebalancing the loss backfires.** Focal loss (0.5005), focal on top of sqrt weights
+  (0.5046) and full inverse-frequency weighting (0.4931, 2 seeds) all score *below* the
+  plain weighted cross-entropy they replace. Inverse-frequency weighting also drops test
+  weighted F1 from 0.767 to 0.728.
+- **Class OTH is the binding constraint, and it does not yield.** `Offensive_Targeted_Insult_Other`
+  has 450 training rows and scores 0.00–0.07 F1 in every configuration tried. Raising its
+  loss weight from 7.5:1 to 55.7:1 against `Not_offensive` moved it only 0.043 → 0.074,
+  while costing more elsewhere than it gained. Since macro F1 is a flat mean over six
+  classes, this one class caps the metric by roughly 0.04, and the cap looks like a
+  property of the data rather than of the method.
+- **Nothing is significant against the baseline on test.** The best result,
+  `s3b_word_lex`, is Δ = +0.0100 with 95% CI [-0.0036, +0.0256], p = 0.082. The honest
+  summary of stages 3 and 3b is a negative result over 11 configurations and 3 seeds.
 
 ## What the method does
 
