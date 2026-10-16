@@ -40,8 +40,21 @@ def build(runs_dir: str | Path, include: list[str] | None = None) -> tuple[dict,
     if not exps:
         raise FileNotFoundError(f"no finished experiments in {runs_dir}")
     runs = {p.name: seed_averaged(p) for p in exps}
-    first = next(iter(runs.values()))
+    ref_name, first = next(iter(runs.items()))
     dev_y, test_y = first["dev_labels"], first["test_labels"]
+
+    # Averaging only makes sense over experiments scored on the same split. A run
+    # made with a different `limit` (a smoke test) would otherwise fail deep inside
+    # the greedy search with an unreadable broadcast error.
+    odd = {n: (r["dev_labels"].shape[0], r["test_labels"].shape[0]) for n, r in runs.items()
+           if r["dev_labels"].shape != dev_y.shape or r["test_labels"].shape != test_y.shape}
+    if odd:
+        raise ValueError(
+            f"these experiments were evaluated on a different split than '{ref_name}' "
+            f"({dev_y.shape[0]} dev / {test_y.shape[0]} test): "
+            + ", ".join(f"{n} ({d} dev / {t} test)" for n, (d, t) in sorted(odd.items()))
+            + ". Move them out of the runs directory, or restrict the ensemble with --include.")
+
     to_probs = lambda s: np.exp(log_softmax(s))
 
     members = greedy_select({n: to_probs(r["dev_scores"]) for n, r in runs.items()}, dev_y)
