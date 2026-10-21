@@ -27,8 +27,13 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tanglish.config import load_config  # noqa: E402
 from tanglish.data import LABELS, load_splits  # noqa: E402
+from tanglish.lexicon import OFFENSIVE_IDS  # noqa: E402
 from tanglish.models import OffensiveClassifier  # noqa: E402
 from tanglish.train import TextPipeline  # noqa: E402
+
+# The same four classes the rest of the codebase counts as offensive, so the
+# binary verdict cannot drift from the label definitions in tanglish/data.py.
+OFFENSIVE_LABELS = {LABELS[i] for i in OFFENSIVE_IDS}
 
 READABLE = {
     "Not_offensive": "not offensive",
@@ -96,10 +101,22 @@ class Predictor:
         return ranked, processed, attention
 
 
+def offensive_prob(ranked: list[tuple[str, float]]) -> float:
+    """P(offensive) = the four Offensive_* classes summed.
+
+    More reliable than the six-way argmax: the model separates offensive from not
+    far better than it tells the four offensive types apart.
+    """
+    return sum(p for name, p in ranked if name in OFFENSIVE_LABELS)
+
+
 def report(pred: Predictor, text: str) -> None:
     ranked, processed, attention = pred(text)
     label, prob = ranked[0]
-    print(f"\n  {READABLE[label]}  ({prob:.0%} confident)")
+    off = offensive_prob(ranked)
+    print(f"\n  \"{text}\"")
+    print(f"  OFFENSIVE: {'yes' if off >= 0.5 else 'no':<3}  ({off:.0%} offensive, {1 - off:.0%} not)")
+    print(f"  type:      {READABLE[label]} ({prob:.0%} confident)")
     print(f"  text the model saw: {processed}")
     print("  all six:", ", ".join(f"{READABLE[n]} {p:.0%}" for n, p in ranked))
     if attention:
@@ -112,34 +129,45 @@ def read_comments(path: Path) -> list[str]:
     return [ln for ln in lines if ln and not ln.startswith("#")]
 
 
-def classify_all(pred: Predictor, comments: list[str]) -> list[tuple[str, str, float]]:
+def classify_all(pred: Predictor, comments: list[str]) -> list[tuple[str, str, float, float]]:
+    """Each row: text, six-way label, that label's probability, P(offensive)."""
     rows = []
     for text in comments:
         ranked, _, _ = pred(text)
         label, prob = ranked[0]
-        rows.append((text, label, prob))
+        rows.append((text, label, prob, offensive_prob(ranked)))
     return rows
 
 
-def print_table(rows: list[tuple[str, str, float]], width: int = 62) -> None:
+def print_table(rows: list[tuple[str, str, float, float]], width: int = 50) -> None:
     # The comment goes last: Tamil script is not as wide as len() suggests, so
     # padding it would throw off every column after it.
     n_w = max(2, len(str(len(rows))))
-    label_w = max(len(READABLE[l]) for _, l, _ in rows)
-    print(f"\n{'#':>{n_w}}  {'prediction':<{label_w}}  conf  comment")
-    print(f"{'-' * n_w}  {'-' * label_w}  ----  {'-' * width}")
-    for i, (text, label, prob) in enumerate(rows, 1):
+    label_w = max(len(READABLE[l]) for _, l, _, _ in rows)
+    print(f"\n{'#':>{n_w}}  {'offensive?':<10}  {'type':<{label_w}}  comment")
+    print(f"{'-' * n_w}  {'-' * 10}  {'-' * label_w}  {'-' * width}")
+    for i, (text, label, _, off) in enumerate(rows, 1):
+        verdict = f"{'YES' if off >= 0.5 else 'no':<3} {off:>3.0%}"
         shown = text if len(text) <= width else text[: width - 1] + "…"
-        print(f"{i:>{n_w}}  {READABLE[label]:<{label_w}}  {prob:>3.0%}  {shown}")
+        print(f"{i:>{n_w}}  {verdict:<10}  {READABLE[label]:<{label_w}}  {shown}")
 
 
-def print_summary(rows: list[tuple[str, str, float]]) -> None:
-    counts = Counter(label for _, label, _ in rows)
-    offensive = sum(n for label, n in counts.items() if label.startswith("Offensive"))
+def print_summary(rows: list[tuple[str, str, float, float]]) -> None:
+    offensive = sum(1 for _, _, _, off in rows if off >= 0.5)
     print(f"\n{len(rows)} comments: {offensive} offensive, {len(rows) - offensive} not")
+
+    counts = Counter(label for _, label, _, _ in rows)
+    print("\nbreakdown by type (the six-way label):")
     for label in LABELS:
         if counts[label]:
             print(f"  {counts[label]:>3}  {READABLE[label]}")
+
+    # Anything near the 50% line is effectively a coin flip and worth eyeballing.
+    unsure = [(i, t, off) for i, (t, _, _, off) in enumerate(rows, 1) if 0.35 <= off <= 0.65]
+    if unsure:
+        print("\nthe model is unsure about these (offensive 35-65%):")
+        for i, text, off in unsure:
+            print(f"  {i:>3}  {off:>3.0%}  {text[:60]}")
 
 
 def main():
@@ -166,14 +194,15 @@ def main():
         print_table(rows)
         print_summary(rows)
         if args.detail:
-            for text, _, _ in rows:
+            for text, _, _, _ in rows:
                 report(pred, text)
         if args.out:
             args.out.parent.mkdir(parents=True, exist_ok=True)
             with open(args.out, "w", newline="", encoding="utf-8") as f:
                 w = csv.writer(f)
-                w.writerow(["text", "label", "confidence"])
-                w.writerows((t, READABLE[l], f"{p:.4f}") for t, l, p in rows)
+                w.writerow(["text", "offensive", "offensive_prob", "type", "type_prob"])
+                w.writerows((t, "yes" if off >= 0.5 else "no", f"{off:.4f}", READABLE[l], f"{p:.4f}")
+                            for t, l, p, off in rows)
             print(f"\nwrote {args.out}")
         return
 
