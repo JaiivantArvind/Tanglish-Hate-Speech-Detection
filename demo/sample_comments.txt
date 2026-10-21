@@ -1,32 +1,30 @@
-# Sample Tanglish comments for the live demo.
-# One comment per line. Blank lines and lines starting with '#' are ignored.
-# Replace these with whatever you or your guide want to test on the day.
+# Real comments from the held-out test set, with their gold labels.
+#
+# Hand-picked to show the full range of behaviour across all six classes,
+# including several the model gets wrong -- so it is NOT an unbiased sample.
+# For an honest accuracy figure use demo/sample_100.txt, which is drawn in
+# proportion to the real test distribution (83% offensive/not, 76% six-way).
+#
+# Format: comment <TAB> label.  Labels: NOT UNT IND GRP OTH NTA
+# A file with no labels works too -- predictions are printed, nothing is scored.
 
-# --- everyday comments, should come out not offensive ---
-super anna vera level acting
-intha padam romba nalla irunthuchu, bgm kalakkitaanga
-bro please upload next part soon
-enna da ipdi pannita, waiting for the trailer
-நல்ல படம், மீண்டும் பார்க்கலாம்
-
-# --- friendly slang: 'daa' and 'dei' are how friends address each other,
-# --- so these are the cases the old hand-written lexicon got wrong
-enna daa saptiya
-dei vanthutiya machan
-poda punda vuttutu po da
-
-# --- offensive, not aimed at anyone in particular ---
-waste padam, time waste pannitaanga
-mokka trailer, yaaru da ipdi edukradhu
-
-# --- offensive, aimed at a person ---
-nee oru loosu, unakku onnum theriyadhu
-dei stupid fellow, un acting thaan worst
-
-# --- offensive, aimed at a group ---
-intha fans ellam waste, unga hero mattum dhaan periya aalaa
-andha area makkal ellam ipdi dhaan irupaanga
-
-# --- not Tamil: the sixth class, kept so our scores compare with published work ---
-this movie was absolutely fantastic
-mera favourite hero hai yeh
+Yaaru movie parthu trailer parkka vandhinga	OTH
+Tharamana sambavam great vetri maran  and dhanush	IND
+Subha se 30 baar sun chuka hun	NTA
+Eppadithan super hero aakanum endu kadaisila kaanama peithiduvanga.	UNT
+மனப்பூர்வமாக கூறிக் கொள்கின்றேன் படம் வெற்றியடைய வாழ்த்துக்கள்	NOT
+Epudi da oru ANJAN  oru AYAN oru NJK. mari irukumo	GRP
+2 million cross panniduchu Innu update Aagala	GRP
+Da suriya kulapaya nee police ah	IND
+Eppovathu kathuna ok yepovumae kathuna yepadi da	UNT
+Thala fans trending no 1 kondu vanga	NOT
+Something special nu namba vaikuthu vijay sir kethu paapum	NOT
+Kaithi jeyil layae irrukirathu nallathu .... BIGIL on the way .....	IND
+iSmart Shankar movie YouTube par Kab Aayegi YouTube	NTA
+worst teaser i have ever seen	NOT
+Motha padathayum trailer la pota... Padathla Ena da irkum?!	GRP
+Movie yachum nailla eruka nu papom	UNT
+Nkp parthu mirandu ponavanga oru likepodugaaaaaa	NOT
+Un like podthavan la manishana illa	UNT
+0:45 ayaz and kutty moonji anna	NOT
+Music bhi chori ka hai  We will rock you	NTA
