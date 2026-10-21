@@ -26,7 +26,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tanglish.config import load_config  # noqa: E402
-from tanglish.data import LABELS, load_splits  # noqa: E402
+from tanglish.data import LABELS, SHORT_LABELS, load_splits  # noqa: E402
 from tanglish.lexicon import OFFENSIVE_IDS  # noqa: E402
 from tanglish.models import OffensiveClassifier  # noqa: E402
 from tanglish.train import TextPipeline  # noqa: E402
@@ -123,10 +123,59 @@ def report(pred: Predictor, text: str) -> None:
         print("  words it focused on:", ", ".join(f"{w} {a:.0%}" for w, a in attention))
 
 
-def read_comments(path: Path) -> list[str]:
-    """One comment per line; blank lines and '#' comments are ignored."""
-    lines = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines()]
-    return [ln for ln in lines if ln and not ln.startswith("#")]
+def read_comments(path: Path) -> list[tuple[str, int | None]]:
+    """One comment per line; blank lines and '#' comments are ignored.
+
+    A line may optionally carry a gold label after a tab ("comment\\tNOT"), in
+    which case the run scores itself. Plain .txt files work unchanged.
+    """
+    out = []
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        text, _, gold = line.partition("\t")
+        text, gold = text.strip(), gold.strip()
+        label = None
+        if gold:
+            names = {n.upper(): i for i, n in enumerate(SHORT_LABELS)}
+            names.update({n.upper(): i for i, n in enumerate(LABELS)})
+            if gold.upper() not in names:
+                raise SystemExit(f"unknown label {gold!r} in {path}; expected one of {SHORT_LABELS}")
+            label = names[gold.upper()]
+        out.append((text, label))
+    return out
+
+
+def print_accuracy(rows: list[tuple[str, str, float, float]], gold: list[int | None]) -> None:
+    """Scored only over the lines that carried a gold label."""
+    pairs = [(r, g) for r, g in zip(rows, gold) if g is not None]
+    if not pairs:
+        return
+    n = len(pairs)
+    six = sum(1 for (_, label, _, _), g in pairs if LABELS.index(label) == g)
+    binary = sum(1 for (_, _, _, off), g in pairs if (off >= 0.5) == (g in OFFENSIVE_IDS))
+    majority = sum(1 for _, g in pairs if g == 0)
+    print(f"\naccuracy over {n} labelled comments")
+    print(f"  offensive / not   {binary / n:>6.1%}")
+    print(f"  exact type (6-way){six / n:>6.1%}   (always saying 'not offensive' would give {majority / n:.1%})")
+
+    print("\n  per class:")
+    for i, short in enumerate(SHORT_LABELS):
+        total = sum(1 for _, g in pairs if g == i)
+        if not total:
+            continue
+        hit = sum(1 for (_, label, _, _), g in pairs if g == i and LABELS.index(label) == i)
+        print(f"    {short}  n={total:>3}  found {hit:>3}  ({hit / total:>5.1%})")
+
+    wrong = [(i, r[0], r[1], g) for i, (r, g) in enumerate(zip(rows, gold), 1)
+             if g is not None and LABELS.index(r[1]) != g]
+    if wrong:
+        print(f"\n  {len(wrong)} wrong on the six-way label:")
+        for i, text, label, g in wrong[:12]:
+            print(f"    {i:>3}  said {SHORT_LABELS[LABELS.index(label)]:<4} was {SHORT_LABELS[g]:<4}  {text[:52]}")
+        if len(wrong) > 12:
+            print(f"    ... and {len(wrong) - 12} more")
 
 
 def classify_all(pred: Predictor, comments: list[str]) -> list[tuple[str, str, float, float]]:
@@ -187,12 +236,15 @@ def main():
           f"lexicon={pred.cfg.lexicon}, three-question heads={'on' if pred.cfg.label_tree else 'off'})")
 
     if args.file:
-        comments = read_comments(args.file)
-        if not comments:
+        entries = read_comments(args.file)
+        if not entries:
             raise SystemExit(f"no comments in {args.file}")
+        comments = [t for t, _ in entries]
+        gold = [g for _, g in entries]
         rows = classify_all(pred, comments)
         print_table(rows)
         print_summary(rows)
+        print_accuracy(rows, gold)
         if args.detail:
             for text, _, _, _ in rows:
                 report(pred, text)
