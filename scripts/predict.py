@@ -154,11 +154,28 @@ def print_accuracy(rows: list[tuple[str, str, float, float]], gold: list[int | N
         return
     n = len(pairs)
     six = sum(1 for (_, label, _, _), g in pairs if LABELS.index(label) == g)
-    binary = sum(1 for (_, _, _, off), g in pairs if (off >= 0.5) == (g in OFFENSIVE_IDS))
     majority = sum(1 for _, g in pairs if g == 0)
-    print(f"\naccuracy over {n} labelled comments")
-    print(f"  offensive / not   {binary / n:>6.1%}")
-    print(f"  exact type (6-way){six / n:>6.1%}   (always saying 'not offensive' would give {majority / n:.1%})")
+
+    # Binary confusion: "offensive" is the positive class, so a false positive is
+    # a clean comment wrongly flagged and a false negative is one that slipped by.
+    tp = sum(1 for (_, _, _, off), g in pairs if off >= 0.5 and g in OFFENSIVE_IDS)
+    fp = sum(1 for (_, _, _, off), g in pairs if off >= 0.5 and g not in OFFENSIVE_IDS)
+    fn = sum(1 for (_, _, _, off), g in pairs if off < 0.5 and g in OFFENSIVE_IDS)
+    tn = sum(1 for (_, _, _, off), g in pairs if off < 0.5 and g not in OFFENSIVE_IDS)
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+
+    print(f"\nscored against gold labels on {n} comments")
+    print(f"\n  offensive / not                 flagged   not flagged")
+    print(f"    truly offensive ({tp + fn:>3})     TP {tp:>4}      FN {fn:>4}")
+    print(f"    truly not       ({fp + tn:>3})     FP {fp:>4}      TN {tn:>4}")
+    print(f"\n    accuracy  {(tp + tn) / n:>6.1%}   ({tp + tn} of {n} correct)")
+    print(f"    precision {precision:>6.1%}   (of {tp + fp} flagged, {tp} were really offensive)")
+    print(f"    recall    {recall:>6.1%}   (of {tp + fn} offensive, {tp} were caught)")
+    print(f"    F1        {f1:>6.1%}")
+    print(f"\n  exact type (6-way)  {six / n:.1%}"
+          f"   (always saying 'not offensive' would give {majority / n:.1%})")
 
     print("\n  per class:")
     for i, short in enumerate(SHORT_LABELS):
