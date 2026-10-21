@@ -17,7 +17,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoModel
+from transformers import AutoConfig, AutoModel
 
 NUM_CLASSES = 6
 
@@ -85,8 +85,20 @@ class WordAttention(nn.Module):
         return pooled, weights
 
 
-def load_encoder(model_name: str) -> nn.Module:
+def load_encoder(model_name: str, pretrained: bool = True) -> nn.Module:
+    """Builds the encoder, with or without its pretrained weights.
+
+    pretrained=False reads only config.json and leaves the weights random. For
+    inference that is enough, because a checkpoint supplies every weight a moment
+    later -- and it saves fetching ~1 GB that is immediately overwritten.
+    """
     # The pooler is unused; dropping it avoids unused-parameter errors under DDP.
+    if not pretrained:
+        config = AutoConfig.from_pretrained(model_name)
+        try:
+            return AutoModel.from_config(config, add_pooling_layer=False)
+        except TypeError:
+            return AutoModel.from_config(config)
     try:
         return AutoModel.from_pretrained(model_name, add_pooling_layer=False)
     except TypeError:
@@ -95,13 +107,13 @@ def load_encoder(model_name: str) -> nn.Module:
 
 class OffensiveClassifier(nn.Module):
     def __init__(self, model_name: str, head: str = "hier", label_tree: bool = False,
-                 dropout: float = 0.1, attn_dim: int = 256):
+                 dropout: float = 0.1, attn_dim: int = 256, pretrained: bool = True):
         super().__init__()
         if head not in ("cls", "word", "hier"):
             raise ValueError(f"unknown head {head!r}")
         self.head = head
         self.label_tree = label_tree
-        self.encoder = load_encoder(model_name)
+        self.encoder = load_encoder(model_name, pretrained)
         hidden = self.encoder.config.hidden_size
 
         if head in ("word", "hier"):

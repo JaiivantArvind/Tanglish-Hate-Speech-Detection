@@ -1,0 +1,32 @@
+# Sample Tanglish comments for the live demo.
+# One comment per line. Blank lines and lines starting with '#' are ignored.
+# Replace these with whatever you or your guide want to test on the day.
+
+# --- everyday comments, should come out not offensive ---
+super anna vera level acting
+intha padam romba nalla irunthuchu, bgm kalakkitaanga
+bro please upload next part soon
+enna da ipdi pannita, waiting for the trailer
+நல்ல படம், மீண்டும் பார்க்கலாம்
+
+# --- friendly slang: 'daa' and 'dei' are how friends address each other,
+# --- so these are the cases the old hand-written lexicon got wrong
+enna daa saptiya
+dei vanthutiya machan
+poda punda vuttutu po da
+
+# --- offensive, not aimed at anyone in particular ---
+waste padam, time waste pannitaanga
+mokka trailer, yaaru da ipdi edukradhu
+
+# --- offensive, aimed at a person ---
+nee oru loosu, unakku onnum theriyadhu
+dei stupid fellow, un acting thaan worst
+
+# --- offensive, aimed at a group ---
+intha fans ellam waste, unga hero mattum dhaan periya aalaa
+andha area makkal ellam ipdi dhaan irupaanga
+
+# --- not Tamil: the sixth class, kept so our scores compare with published work ---
+this movie was absolutely fantastic
+mera favourite hero hai yeh
