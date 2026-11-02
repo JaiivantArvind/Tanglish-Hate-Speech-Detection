@@ -1,0 +1,105 @@
+# 100 real comments sampled from the held-out test set, with gold labels.
+# Sampled in proportion to the test distribution, so the accuracy printed
+# below estimates our reported test accuracy (83.3% offensive/not, 75.3% six-way).
+# Format: comment <TAB> label.  Labels: NOT UNT IND GRP OTH NTA
+
+படம் பெயர் mental nu வச்சி இருக்கலாம்	UNT
+Note:Oru oru second kum oru comment varuthu	NOT
+Otha padam vera level ah irukum pola .thala mass	NOT
+Youtupe தெரிக்க விட்டாச்சி..... 30 நிமிடம் 100 k LIKE....	NOT
+4 Million views  343k Likes  #Vivegam mass Hollywood look thalaaaaa	NOT
+Marana waiting 2009 ku apro lose idatha ippo pudika porom	NOT
+Deiiii inime achu ipdi nalla trailer ku kuruttu thanama dislike pannatheenga da ....by Vijay fan	UNT
+ஜோக்கர்: எனக்கு கண்ட நேரத்துல சிரிப்பு வரும்  ஹிப் ஹாப்: எனக்கும்தான்  பாண்டியன் ஜனகராஜ்: அங்க என்னடா சத்தம்?	UNT
+Suriya annan ishtam. Teaser and Trailer Vere level da machi.... Naanka #kaaathiripom NGK.......	NOT
+தரமான செருப்படி சில நாடக காதல் கூட்டத்திற்கு மென்மேலும் வளர வாழ்த்துக்கள்	GRP
+5 HRS 4.1M views. Thalaivaa Semma mass	NOT
+பெண்களை இவனிங்க சொத்தா பாக்காங்களாம்.. முதல்ல உணர்ச்சி உள்ள சக உயிரினமா பாருங்கடா அப்பர செண்டிகளா....	NOT
+Soon 1M Likes  Before Movie Release Kandippa Vantudum	NOT
+Super star rajini Marana mass trailer	NOT
+jayam Ravi Kajal Agarwal fans like there	NOT
+Meratitiye Thala  #Nerkonda Paarvai Marana Waiting.....	NOT
+Thalapathy fans inga like podunga papom evlo per vanthurukinga ....... Am thala blood	NOT
+Ongammala kuttu va pundaila vadai sudurom	UNT
+BGM Nerkonda Paarvai Madhiri eh iruke	IND
+Onumeh purilanu sollaravanga like pannunga 🤣but like myskinn movies	NOT
+Idhula yaar ellam pink movie ya parthu irukeenga	NOT
+Pakarauthuku chinna payyan maari orukku..  rajani sir n nawasudhin sidhique..	NOT
+Trailer verithanam solluravanga like pannunga 🤘	NOT
+i want to see so badly	NOT
+marna mass       suryaaaaaaaaaaaaaaaaaaaaaa is back	NOT
+Padippa mattum yaaralayum eduthuka mudiyaathu ........ Yappaaaaa	NOT
+Thala rasigan endru solluda  Thalai nimirnthu nilluda	NOT
+Nanum indha padathula act pannirukkan ks Ravi Kumar kooda hiphop pinnaei iruppan bar scene la	NOT
+Padam pathathukku appuravum trailer pathavunge like podunge  fan from kerala	OTH
+Vijay sethupathi fans hit like here	NOT
+yes it is releasing in kannada	NOT
+Deepavalikku entha moviekku wait pandrega Sanga tamizhan) Kaithi)-----commend Bigil---------like	NOT
+therinja edhiriya vida theriyadha edhirikkuthaan ... alllllluuuu... theri baby .. wow wow maaass	NOT
+Trailer podicha vanga mattum like pannugo	NOT
+BGM    karthi  telugu fanz like here	NOT
+kARTHI .....ANNA KU VALTHUKAL....KAITHI SUPRR DARK THRILLER FILM	NOT
+Shankar sir Vera Vera Vera leval sir super film I am veyding 29 now	NOT
+Aravind samy and vj sethu	NOT
+What a music.. Enna bgm.. samma.	NOT
+Thalaivaaa, thank you karthik sir to gv us old rajinikanth	NOT
+After Watching first Song Promo.... Gama Gama Gama Gama Samayal...	NOT
+Saw Movie maathiri iruku... But anyways Myskin  waiting badly	NOT
+Ye kya cartoon bana diye ho be?	NTA
+Yuvan BGM vera level and thala style vera level!!!	NOT
+Friends adhukaka naanga veeram illamalum illa nama onnairrupom caste political namaku vena	NOT
+Diwali ku sambavam unduu....#kaithi marana waiting	UNT
+BGM super .bgm king na athu Namma ysr thaan.	NOT
+NGK KERALA FANS SHOW TICKET HEAVY DEAMAND VEERITHANAM OVER LOADING	NOT
+Trailer vera level nu solravanga like poduga	NOT
+First time treaser paakarapavea padathuku marana waiting	NOT
+Superb look rajini sir and very stylish	NOT
+Iniku may 31 padam realease aairchu	NOT
+Asuran trailer is asura vadham 🤩	NOT
+படம் வெற்றி பெற தங்களை அன்புள்ள நமது செந்தங்கள் அனைவரும் பகிரவும்	NOT
+Mokka da deiii ithelam Oru padama	GRP
+ippo trailer parkura angaali pangaali ellaam oru like podunga	NOT
+kaththita irukan teaser fulla bgm vara kadupa avuthu ivanuku dsp ya paravala	UNT
+Views struck power OOF Surya fans	NOT
+ايش هذا الفيلم متصدر في الامارات والسعودية ...ياخي سامج وتفاهة	NTA
+VFX Sari illa.. Black Gate kuda VFX potturukanga...	GRP
+Telugu fans of Surya hit like , Surya super king	NOT
+Harris  hayaraj romba  nalaikku apram varinga pola .....	NOT
+Rajini  1999 - naan viraivil arasiyaluku varuven 2019 - na viraivil arasiyaluku varuven	NOT
+Irumbu thirai murattu singam mathiri iruku????	NOT
+Katta waiting. . .   High voltage. .   Suriya  Lalettan	NTA
+0:12 Ellorum seththa tha sudukadu povanga....!	NOT
+Evanda antha moonu peru dislike pannuthu..... Kirukanungaal...  Super story...	GRP
+Enna da idhu marana mass ah irukku,all the best vetrimaran..	NOT
+முதல் வாட்டி டிரெய்லர் ah பாத்து sirichichen... who r laugh?	NOT
+Ajith ku set agala.. No mass scene	IND
+Bgm is like kaala poraduvom song	NOT
+Viswasam ellam nar nara kizhiya pokuth mass kattreenga thaliver	UNT
+Lalettan  Surya  Lalettan fans Surya fans undengil like	NTA
+Poga dai sarkar tha best  NGK waste	GRP
+Sema fun ah irukum pola film	NOT
+rava rava rava anil rava birava	IND
+மோகன் மற்றும் அஜித்தின் மச்சானுக்கும் வன்னியர் சார்பாக மனமார்ந்த நன்றி.	NOT
+Dei nadhari pasikuthu na ipdi dha kathuviya??kaadhu valikuthu da kulla	IND
+suriya: naan kola passiyila irruken audience: annanuku oru uthaapam	IND
+Malai vantha mayil aadum...thala vanthaa tamil nadey aadum....	NOT
+இந்த படம் வெற்றிபெற  எல்லாம் வல்ல சிவனை வேண்டுகிறேன்.	NOT
+199K likes left to reach 1M likes	NOT
+BGM VERA LEVEL  U1 BACK	NOT
+Iam surya fan but thala teser super	NOT
+Mission impossible tamil version pakkura madhiri irukku vera level	NOT
+nan arasailyakku varuvathu uruthi... semaiya kalaichutaniga	IND
+Mokka Thu..... Ena solradhu coffee sollunga thatha kum pethikum loves......	GRP
+Editing seriya panala bha.. jump shot la rope theriyuthu.. paathu konjam seingha...	OTH
+Vijay sethu pathi fans hit like	NOT
+Bgm seme....  Its a selvaragavan movie..  Mass waiting. Epavume selvaragavana mass dhan...  Selvaragavan fans	NOT
+Kathir chlm thooda girls fanlaa oru like pootunga	NOT
+Vera level nanpa. Padam vetri adaiya vendukiren. Sila koottathukku adi verthurukkum	NOT
+Mass Teaser !!!  I'M Waiting !!!  #Vilayadelama	NOT
+2:14 mission impossible scene suttutingale da...	UNT
+Again yuvan mass , BGM therikidhu , nail bitting BGM.....	NOT
+ஜீவாவின் வழக்கமான மொக்கை ஆக்ஷன் படங்களில் இதுவும் ஒன்று, தலைவலி உறுதி.	NOT
+Ayoo 00:15 Ennada ennoda sataiya Panta Thachi potutinga..	GRP
+Intha movie yathu thalaivanuku come back ah irukanum	NOT
+Rithika vida vaani than azhaga irukanga	IND
+Adei indha ulagathula siripu dhan nallathunu nenacha...!! Ini siricha pocha	NOT

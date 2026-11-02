@@ -1,0 +1,5 @@
+inherit: s3_base.yaml
+name: s3_hier_tree
+head: hier
+label_tree: true
+keep_checkpoint: true   # used for attention plots in phase 5

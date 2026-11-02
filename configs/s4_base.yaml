@@ -1,0 +1,28 @@
+# Large backbones with the stage-3 winner.
+#
+# Stage 3 (dev macro-F1, the selection metric) found:
+#   s3_hier_tree_lex  0.5104   word hierarchy + label tree + curated lexicon
+#   s3_hier_tree_trl  0.5096   + transliteration
+#   s3_word           0.5089   word hierarchy only
+#   s3_cls            0.5048   plain [CLS] baseline
+#   s3_hier_tree      0.5040   word hierarchy + label tree
+#   s3_hier           0.5038   word hierarchy
+# The spread (0.0066) is inside the seed std (+-0.005), so no head is significantly
+# better than the baseline: the hierarchy and the label tree are carried no further.
+# The two ingredients with positive signal are the word head (+0.0041 over cls) and
+# the curated lexicon (+0.0064 over hier_tree), so stage 4 takes those two.
+# Transliteration is dropped: worst test macro-F1 (0.4905) at roughly twice the cost.
+#
+# Loss and class weighting are still at the stage-3 defaults (ce + sqrt).
+# SET THESE FROM STAGE 3B BEFORE RUNNING STAGE 4: if s3b_word_focal, _focal_sqrt or
+# _balanced wins on dev macro F1, copy its loss/class_weight here; if s3b_word_lex
+# wins, the lexicon below is already right. Stage 4 costs ~5 h, so it is worth the
+# two minutes of reading the dev column first.
+inherit: base.yaml
+head: word
+label_tree: false
+lexicon: curated
+translit: "off"
+lr: 1.0e-5
+batch_size: 8
+grad_accum: 2

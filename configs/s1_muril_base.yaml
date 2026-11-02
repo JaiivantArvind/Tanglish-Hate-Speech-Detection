@@ -1,0 +1,3 @@
+inherit: base.yaml
+name: s1_muril_base
+model_name: google/muril-base-cased

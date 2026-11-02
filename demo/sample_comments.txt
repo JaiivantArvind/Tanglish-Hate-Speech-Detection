@@ -1,0 +1,30 @@
+# Real comments from the held-out test set, with their gold labels.
+#
+# Hand-picked to show the full range of behaviour across all six classes,
+# including several the model gets wrong -- so it is NOT an unbiased sample.
+# For an honest accuracy figure use demo/sample_100.txt, which is drawn in
+# proportion to the real test distribution (83% offensive/not, 76% six-way).
+#
+# Format: comment <TAB> label.  Labels: NOT UNT IND GRP OTH NTA
+# A file with no labels works too -- predictions are printed, nothing is scored.
+
+Yaaru movie parthu trailer parkka vandhinga	OTH
+Tharamana sambavam great vetri maran  and dhanush	IND
+Subha se 30 baar sun chuka hun	NTA
+Eppadithan super hero aakanum endu kadaisila kaanama peithiduvanga.	UNT
+மனப்பூர்வமாக கூறிக் கொள்கின்றேன் படம் வெற்றியடைய வாழ்த்துக்கள்	NOT
+Epudi da oru ANJAN  oru AYAN oru NJK. mari irukumo	GRP
+2 million cross panniduchu Innu update Aagala	GRP
+Da suriya kulapaya nee police ah	IND
+Eppovathu kathuna ok yepovumae kathuna yepadi da	UNT
+Thala fans trending no 1 kondu vanga	NOT
+Something special nu namba vaikuthu vijay sir kethu paapum	NOT
+Kaithi jeyil layae irrukirathu nallathu .... BIGIL on the way .....	IND
+iSmart Shankar movie YouTube par Kab Aayegi YouTube	NTA
+worst teaser i have ever seen	NOT
+Motha padathayum trailer la pota... Padathla Ena da irkum?!	GRP
+Movie yachum nailla eruka nu papom	UNT
+Nkp parthu mirandu ponavanga oru likepodugaaaaaa	NOT
+Un like podthavan la manishana illa	UNT
+0:45 ayaz and kutty moonji anna	NOT
+Music bhi chori ka hai  We will rock you	NTA

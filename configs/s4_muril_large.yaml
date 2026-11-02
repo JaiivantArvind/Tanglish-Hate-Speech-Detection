@@ -1,0 +1,3 @@
+inherit: s4_base.yaml
+name: s4_muril_large
+model_name: google/muril-large-cased

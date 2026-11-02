@@ -1,0 +1,3 @@
+inherit: base.yaml
+name: s2_xlmr_base_dapt
+model_name: dapt/xlmr-base-tanglish/final

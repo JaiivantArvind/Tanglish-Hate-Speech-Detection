@@ -1,0 +1,3 @@
+inherit: s3_base.yaml
+name: s3_cls
+head: cls

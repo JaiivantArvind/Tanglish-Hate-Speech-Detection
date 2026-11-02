@@ -1,0 +1,7 @@
+# Full inverse-frequency weighting. Stage 3 used sqrt throughout, which gives OTH
+# only 2.0x against NOT's 0.27x; balanced makes that ~3.2x against 0.058x. Expected
+# to trade NOT and weighted-F1 for the rare classes, which macro-F1 rewards.
+inherit: s3_base.yaml
+name: s3b_word_balanced
+head: word
+class_weight: balanced

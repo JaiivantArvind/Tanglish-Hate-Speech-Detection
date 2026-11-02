@@ -1,0 +1,15 @@
+# Exercises every code path in about a minute on CPU.
+inherit: base.yaml
+name: smoke
+out_dir: runs_smoke
+model_name: hf-internal-testing/tiny-random-bert
+limit: 200
+epochs: 2
+batch_size: 8
+head: hier
+label_tree: true
+lexicon: both
+translit: aug_tta
+fp16: false
+num_workers: 0
+keep_checkpoint: true

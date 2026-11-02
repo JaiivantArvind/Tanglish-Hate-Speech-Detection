@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+runs/
+runs_smoke/
+reports_smoke/
+dapt/
+# the unzipped demo run; demo/sample_comments.txt stays tracked
+demo/*/
+*.pt
+*.joblib

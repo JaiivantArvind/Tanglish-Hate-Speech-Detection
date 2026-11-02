@@ -1,0 +1,5 @@
+# Stage 3 backbone. XLM-R won the stage-1 sweep (dev macro-F1 0.495 vs MuRIL 0.399),
+# so stage 3 builds on its domain-adapted version. If stage 2 shows no dev gain,
+# set this to FacebookAI/xlm-roberta-base.
+inherit: base.yaml
+model_name: dapt/xlmr-base-tanglish/final

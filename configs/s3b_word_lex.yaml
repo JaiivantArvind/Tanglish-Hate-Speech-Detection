@@ -1,0 +1,7 @@
+# Stage 3 tested the curated lexicon only on top of the label-tree head, and tested
+# the word head only without the lexicon. Those were the two settings with positive
+# dev signal (+0.0064 and +0.0041), so this is the combination the matrix missed.
+inherit: s3_base.yaml
+name: s3b_word_lex
+head: word
+lexicon: curated

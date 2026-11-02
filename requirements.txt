@@ -1,11 +1,14 @@
-torch
-transformers
-datasets
-scikit-learn
-pandas
-numpy
-matplotlib
-seaborn
-accelerate
-tqdm
-joblib
+# torch is preinstalled on Kaggle/Colab; install a CUDA build yourself elsewhere.
+torch>=2.1
+transformers>=4.41
+accelerate>=0.30
+datasets>=2.18
+scikit-learn>=1.3
+pandas>=2.0
+numpy>=1.24
+pyyaml>=6.0
+emoji>=2.8
+matplotlib>=3.7
+pytest>=7.0
+# Optional, for romanised -> Tamil views (python scripts/phase2_features.py --xlit):
+#   ai4bharat-transliteration  (needs fairseq; easiest in a separate Python 3.10 env)
